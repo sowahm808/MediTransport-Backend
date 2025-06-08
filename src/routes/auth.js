@@ -83,11 +83,11 @@ router.post('/register', asyncHandler(async (req, res) => {
     // Begin transaction
     await query('BEGIN');
 
-    // Create user
+    // Create user with hashed password
     await query(
-      `INSERT INTO users (id, name, email, phone, role, created_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())`,
-      [userId, name, email, phone, role]
+      `INSERT INTO users (id, name, email, password, phone, role, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+      [userId, name, email, hashedPassword, phone, role]
     );
 
     // If registering as driver, create driver record
@@ -146,10 +146,9 @@ router.post('/login', asyncHandler(async (req, res) => {
 
   const { email, password } = value;
 
-  // Get user from database (we'll need to store password for login)
-  // Note: In production, you'd want to use Firebase Auth or similar
+  // Retrieve user including hashed password
   const userResult = await query(
-    'SELECT id, name, email, phone, role, created_at FROM users WHERE email = $1',
+    'SELECT id, name, email, phone, role, password, created_at FROM users WHERE email = $1',
     [email]
   );
 
@@ -159,12 +158,8 @@ router.post('/login', asyncHandler(async (req, res) => {
 
   const user = userResult.rows[0];
 
-  // For demo purposes, we'll create a simple password check
-  // In production, you'd verify against stored hashed password
-  // const isValidPassword = await bcrypt.compare(password, user.password);
-
-  // Temporary password validation (replace with actual hash comparison)
-  const isValidPassword = password.length >= 8;
+  // Validate password using bcrypt hash
+  const isValidPassword = await bcrypt.compare(password, user.password);
 
   if (!isValidPassword) {
     throw new AppError('Invalid email or password', 401);
