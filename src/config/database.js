@@ -85,6 +85,7 @@ const initDatabase = async () => {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
         phone TEXT UNIQUE,
         role TEXT CHECK (role IN ('patient', 'driver', 'admin')) NOT NULL,
         created_at TIMESTAMP DEFAULT NOW(),
